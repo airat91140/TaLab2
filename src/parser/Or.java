@@ -7,4 +7,9 @@ public class Or extends Binary{
     public Or(Node left, Node right) {
         super(new Token(Tag.OR), left, right);
     }
+
+    @Override
+    public Node clone() {
+        return new Or(left.clone(), right.clone());
+    }
 }

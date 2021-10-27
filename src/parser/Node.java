@@ -11,4 +11,8 @@ public class Node {
     public Token getOp() {
         return op;
     }
+
+    public Node clone() {
+        return new Node(op);
+    }
 }

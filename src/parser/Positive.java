@@ -9,4 +9,9 @@ public class Positive extends Node {
         super(new Token(Tag.POSITIVE));
         left = node;
     }
+
+    @Override
+    public Node clone() {
+        return new Positive(left.clone());
+    }
 }

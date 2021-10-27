@@ -42,7 +42,7 @@ public class Parser {
     }
 
     public void program() throws Exception {
-        root = node();
+        root = new Concat(node(), new EOS());
     }
 
     Node node() throws Exception {
@@ -103,17 +103,17 @@ public class Parser {
             case Tag.CAPTURE -> {
                 int index = ((Capture) look).getIndex();
                 move();
-                x = node();
+                x = or();
                 match(')');
                 table.put(index, x);
             }
             case '(' -> {
                 move();
-                x = node();
+                x = or();
                 match(')');
             }
             case Tag.GROUP -> {
-                x = table.get(((Group) look).getIndex());
+                x = table.get(((Group) look).getIndex()).clone();
                 move();
             }
             default -> {

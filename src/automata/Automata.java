@@ -3,8 +3,7 @@ package automata;
 import lexer.Tag;
 import parser.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 
 public class Automata {
     private Node root;
@@ -32,15 +31,63 @@ public class Automata {
         return false;
     }
 
-    private HashSet<State> firstpos(Node node) {
-
+    private Set<Literal> firstpos(Node node, Set<Literal> set) {
+        if (set == null) //first launch
+            set = Collections.newSetFromMap(new IdentityHashMap<>());
+        if (node instanceof Binary) {
+            if (node instanceof Concat)
+                if (nullable(((Concat) node).left)) {
+                    firstpos(((Concat) node).left, set);
+                    firstpos(((Concat)node).right, set);
+                }
+                else firstpos(((Concat) node).left, set);
+            else if (node instanceof Or) {
+                firstpos(((Or) node).left, set);
+                firstpos(((Or) node).right, set);
+            }
+        }
+        else if (node instanceof Literal) {
+            if (((Literal)node).getOp().getTag() != Tag.EMPTY)
+                set.add((Literal) node);
+        }
+        else if (node instanceof Repeat) {
+            firstpos(((Repeat) node).left, set);
+        }
+        else if (node instanceof Positive) {
+            firstpos(((Positive) node).left, set);
+        }
+        return set;
     }
 
-    private HashSet<State> lastpos(Node node) {
-
+    private Set<Literal> lastpos(Node node, Set<Literal> set) {
+        if (set == null) //first launch
+            set = Collections.newSetFromMap(new IdentityHashMap<>());
+        if (node instanceof Binary) {
+            if (node instanceof Concat)
+                if (nullable(((Concat) node).right)) {
+                    lastpos(((Concat) node).left, set);
+                    lastpos(((Concat)node).right, set);
+                }
+                else lastpos(((Concat) node).right, set);
+            else if (node instanceof Or) {
+                lastpos(((Or) node).left, set);
+                lastpos(((Or) node).right, set);
+            }
+        }
+        else if (node instanceof Literal) {
+            if (((Literal)node).getOp().getTag() != Tag.EMPTY)
+                set.add((Literal) node);
+        }
+        else if (node instanceof Repeat) {
+            lastpos(((Repeat) node).left, set);
+        }
+        else if (node instanceof Positive) {
+            lastpos(((Positive) node).left, set);
+        }
+        return set;
     }
 
-    private HashSet<State> followpos(Node node) {
+    private Set<Literal> followpos(Literal literal) {
 
     }
 }

@@ -8,4 +8,9 @@ public class Repeat extends Node{
         super(t);
         this.left = left;
     }
+
+    @Override
+    public Node clone() {
+        return new Repeat(getOp(), left.clone());
+    }
 }
