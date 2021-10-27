@@ -3,7 +3,12 @@ package parser;
 import lexer.*;
 
 import java.util.TreeMap;
-
+/*
+literal -> char || escape || ^ || (Node) || \n || (n:Node) || Literal{x,y} || Literal+
+concat -> concat | literal || literal
+or -> or | concat || concat
+Node -> or
+ */
 public class Parser {
     private Lexer lexer;
     private Token look;
@@ -95,25 +100,26 @@ public class Parser {
     Node literal() throws Exception {
         Node x = null;
         switch (look.getTag()) {
-            case Tag.CAPTURE:
-                int index = ((Capture)look).getIndex();
+            case Tag.CAPTURE -> {
+                int index = ((Capture) look).getIndex();
                 move();
                 x = node();
                 match(')');
                 table.put(index, x);
-                break;
-            case '(':
+            }
+            case '(' -> {
                 move();
                 x = node();
                 match(')');
-                break;
-            case Tag.GROUP:
-                x = table.get(((Group)look).getIndex());
+            }
+            case Tag.GROUP -> {
+                x = table.get(((Group) look).getIndex());
                 move();
-                break;
-            default:
+            }
+            default -> {
                 x = new Literal(look);
                 move();
+            }
         }
         if (lexer.isEOS)
             return x;

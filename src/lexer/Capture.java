@@ -1,7 +1,7 @@
 package lexer;
 
-public class Capture extends Token {
-    private final int index;
+public class Capture extends Token { // (n:r)
+    private final int index; // n
 
     public int getIndex() {
         return index;

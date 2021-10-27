@@ -1,7 +1,7 @@
 package lexer;
 
-public class Group extends Token {
-    private final int index;
+public class Group extends Token { // \n
+    private final int index; //n
 
     public int getIndex() {
         return index;
