@@ -8,10 +8,19 @@ import java.util.*;
 public class Automata {
     private Node root;
     private ArrayList<State> states;
+    private IdentityHashMap<Literal, Set<Literal>> table;
     public Automata(Node root) {
         states = new ArrayList<>();
         this.root = root;
+        table = new IdentityHashMap<>();
     }
+    private void put(Literal lit, Set<Literal> follow) {
+        if (!table.containsKey(lit))
+            table.put(lit, Collections.newSetFromMap(new IdentityHashMap<>()));
+        table.get(lit).addAll(follow);
+
+    }
+
     private boolean nullable(Node node) {
         if (node instanceof Binary) {
             if (node instanceof Concat)
@@ -23,7 +32,10 @@ public class Automata {
             return ((Literal)node).getOp().getTag() == Tag.EMPTY;
         }
         else if (node instanceof Repeat) {
-            return nullable(((Repeat)node).left);
+            if (((lexer.Repeat)node.getOp()).getStart() == 0)
+                return true;
+            else
+                return nullable(((Repeat)node).left);
         }
         else if (node instanceof Positive) {
             return nullable(((Positive)node).left);
@@ -87,7 +99,30 @@ public class Automata {
         return set;
     }
 
-    private Set<Literal> followpos(Literal literal) {
+    private void followpos(Node node) {
+        if (node instanceof Concat) {
+            followpos(((Concat) node).left);
+            Set<Literal> leftSet = lastpos(((Concat) node).left, null);
+            Set<Literal> rightSet = firstpos(((Concat) node).right, null);
+            for (Literal it : leftSet)
+                put(it, rightSet);
+            followpos(((Concat) node).right);
+        } else if (node instanceof Positive) {
+            followpos(((Positive) node).left);
+            Set<Literal> lastSet = lastpos(((Positive) node).left, null);
+            Set<Literal> firstSet = firstpos(((Positive) node).left, null);
+            for (Literal it : lastSet)
+                put(it, firstSet);
+        } else if (node instanceof Repeat) {
+            followpos(((Repeat) node).left);
+            Set<Literal> lastSet = lastpos(((Repeat) node).left, null);
+            Set<Literal> firstSet = firstpos(((Repeat) node).left, null);
+            for (Literal it : lastSet)
+                put(it, firstSet);
+        }
+    }
 
+    private Set<Literal> followpos(Literal literal) {
+        return table.get(literal);
     }
 }
