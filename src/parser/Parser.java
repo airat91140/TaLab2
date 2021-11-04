@@ -4,8 +4,8 @@ import lexer.*;
 
 import java.util.TreeMap;
 /*
-literal -> char || escape || ^ || (Node) || \n || (n:Node) || Literal{x,y} || Literal+
-concat -> concat | literal || literal
+literal -> char || escape || ^ || (or) || \n || (n:or) || Literal{x,y} || Literal+
+concat -> concat . literal || literal
 or -> or | concat || concat
 Node -> or
  */
@@ -101,9 +101,9 @@ public class Parser {
         Node x = null;
         switch (look.getTag()) {
             case Tag.CAPTURE -> {
-                int index = ((Capture) look).getIndex();
+                int index = ((lexer.Capture) look).getIndex();
                 move();
-                x = or();
+                x = new Capture(or(), look);
                 match(')');
                 table.put(index, x);
             }
@@ -113,7 +113,7 @@ public class Parser {
                 match(')');
             }
             case Tag.GROUP -> {
-                x = table.get(((Group) look).getIndex()).clone();
+                x = new Group(look);
                 move();
             }
             default -> {
