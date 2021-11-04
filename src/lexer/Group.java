@@ -1,13 +1,13 @@
 package lexer;
 
-public class Group extends Token { // \n
+public class TokenGroup extends Token { // \n
     private final int index; //n
 
     public int getIndex() {
         return index;
     }
 
-    Group(int i) {
+    TokenGroup(int i) {
         super(Tag.GROUP);
         index = i;
     }

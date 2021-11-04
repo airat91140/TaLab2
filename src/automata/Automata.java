@@ -24,7 +24,7 @@ public class Automata {
         build();
     }
 
-    Set<Literal> getUnion(int current, char c) {
+    Set<Literal> getUnion(int current, int c) {
         Set<Literal> result = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Literal lit : states.get(current).getInternal()) {
             if (lit.getOp().getTag() == c) {
@@ -38,23 +38,31 @@ public class Automata {
         return result;
     }
 
+    private int processState(int c, int current, HashSet<Integer> unMarkedIds, Integer lastId) {
+        State u = new State(lastId + 1, getUnion(current, c));
+        if (!states.contains(u)) {
+            unMarkedIds.add(++lastId);
+            states.add(u);
+        }
+        else {
+            u.id = states.get(states.indexOf(u)).id;
+        }
+        states.get(current).addTransition(c, u);
+        return lastId;
+    }
+
     private void build() {
         int lastId = 0;
-        HashSet<Integer> UnMarkedIds = new HashSet<>();
-        UnMarkedIds.add(lastId);
+        HashSet<Integer> unMarkedIds = new HashSet<>();
+        unMarkedIds.add(lastId);
         states.add(new State(lastId, firstpos(root, null)));
-        while (!UnMarkedIds.isEmpty()) {
-            int current = UnMarkedIds.iterator().next();
-            UnMarkedIds.remove(current);
-            for (char c = ' '; c <= '~'; ++c) {
-                State u = new State(lastId + 1, getUnion(current, c));
-                if (!states.contains(u)) {
-                    UnMarkedIds.add(++lastId);
-                    states.add(u);
-                }
-                states.get(current).addTransition(c, u);
+        while (!unMarkedIds.isEmpty()) {
+            int current = unMarkedIds.iterator().next();
+            unMarkedIds.remove(current);
+            for (char c = 'a'; c <= 'b'; ++c) {
+                lastId = processState(c, current, unMarkedIds, lastId);
             }
-
+            lastId = processState(Tag.EOS, current, unMarkedIds, lastId);
         }
     }
 

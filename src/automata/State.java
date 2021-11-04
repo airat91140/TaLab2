@@ -5,7 +5,7 @@ import parser.Literal;
 import java.util.*;
 
 public class State {
-    private HashMap<Character, Integer> transitions;
+    private HashMap<Integer, Integer> transitions; // first is symbol, second is id
     int id;
     Set<Literal> internal;
 
@@ -27,7 +27,7 @@ public class State {
         return Objects.hash(internal);
     }
 
-    public HashMap<Character, Integer> getTransitions() {
+    public HashMap<Integer, Integer> getTransitions() {
         return transitions;
     }
 
@@ -39,11 +39,11 @@ public class State {
         return internal;
     }
 
-    public void addTransition(char symbol, State state) {
+    public void addTransition(int symbol, State state) {
         transitions.put(symbol, state.id);
     }
 
-    public void addTransition(char symbol, int id) {
+    public void addTransition(int symbol, int id) {
         transitions.put(symbol, id);
     }
 }

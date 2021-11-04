@@ -3,9 +3,9 @@ package lexer;
 import lexer.Tag;
 import lexer.Token;
 
-public class Escape extends Token { // #
+public class TokenEscape extends Token { // #
     private final int val; // value after #
-    public Escape(char ch) {
+    public TokenEscape(char ch) {
         super(Tag.ESCAPE);
         val = ch;
     }

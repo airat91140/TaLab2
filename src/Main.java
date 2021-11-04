@@ -5,7 +5,7 @@ import parser.Parser;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        String str = "a|d";
+        String str = "abaaabb(a|b)+";
         Automata a = new Automata(str);
         return;
     }
