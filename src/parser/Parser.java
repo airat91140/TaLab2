@@ -83,7 +83,7 @@ public class Parser {
     }
 
     Node repeat(Node x) throws Exception {
-        lexer.Repeat tmp = (lexer.Repeat) look;
+        TokenRepeat tmp = (TokenRepeat) look;
         move();
         Node y = new Repeat(tmp, x);
         if (lexer.isEOS)
@@ -101,7 +101,7 @@ public class Parser {
         Node x = null;
         switch (look.getTag()) {
             case Tag.CAPTURE -> {
-                int index = ((lexer.Capture) look).getIndex();
+                int index = ((TokenCapture) look).getIndex();
                 move();
                 x = new Capture(or(), look);
                 match(')');

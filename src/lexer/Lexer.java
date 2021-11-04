@@ -49,7 +49,7 @@ public class Lexer {
                 }
                 if (peek(pos++) != '}') // repeat tag must be closed by '}'
                     Error();
-                return new Repeat(start, end);
+                return new TokenRepeat(start, end);
 
             case '(':
                 tmp = pos + 1;
@@ -58,12 +58,12 @@ public class Lexer {
                 if (peek(tmp) == ':' && tmp != pos + 1) {// we reached any symbol, so we need to check if it has ':' and string is not like (:r)
                     int index = Integer.parseInt(regex.substring(pos + 1, tmp)); // pos + 1 points on first digit, tmp on ':'
                     pos = tmp + 1;
-                    return new Capture(index);
+                    return new TokenCapture(index);
                 } else return new Token(peek(pos++)); // usual '('
 
             case '#': // escape symbol
                 ++pos; // just skip it and send the escaping symbol value
-                return new Escape(peek(pos++));
+                return new TokenEscape(peek(pos++));
 
             case '\\': // extracting numeric group
                 tmp = pos + 1;
@@ -73,7 +73,7 @@ public class Lexer {
                     ++tmp;
                 int index = Integer.parseInt(regex.substring(pos + 1, tmp));
                 pos = tmp;
-                return new Group(index);
+                return new TokenGroup(index);
 
             default:
                 if (peek(pos) >= ' ') // sending only writable symbols

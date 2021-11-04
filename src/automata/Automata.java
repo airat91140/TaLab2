@@ -1,11 +1,12 @@
 package automata;
 
-import lexer.Escape;
+import lexer.TokenEscape;
 import lexer.Lexer;
 import lexer.Tag;
+import lexer.TokenGroup;
+import lexer.TokenRepeat;
 import parser.*;
 
-import java.security.cert.CollectionCertStoreParameters;
 import java.util.*;
 
 public class Automata {
@@ -29,8 +30,8 @@ public class Automata {
         for (Literal lit : states.get(current).getInternal()) {
             if (lit.getOp().getTag() == c) {
                 result.addAll(followpos(lit));
-            } else if (lit.getOp() instanceof Escape) {
-                if (((Escape) lit.getOp()).getVal() == c) {
+            } else if (lit.getOp() instanceof TokenEscape) {
+                if (((TokenEscape) lit.getOp()).getVal() == c) {
                     result.addAll(followpos(lit));
                 }
             }
@@ -82,7 +83,7 @@ public class Automata {
         } else if (node instanceof Literal) {
             return ((Literal) node).getOp().getTag() == Tag.EMPTY;
         } else if (node instanceof Repeat) {
-            if (((lexer.Repeat) node.getOp()).getStart() == 0)
+            if (((TokenRepeat) node.getOp()).getStart() == 0)
                 return true;
             else
                 return nullable(((Repeat) node).left);
@@ -91,7 +92,7 @@ public class Automata {
         } else if (node instanceof Capture) {
             return nullable(((Capture) node).getChild());
         } else if (node instanceof Group) {
-            return nullable(parser.getTable().get(((lexer.Group)node.getOp()).getIndex()));
+            return nullable(parser.getTable().get(((TokenGroup)node.getOp()).getIndex()));
         }
         return false;
     }
@@ -119,7 +120,7 @@ public class Automata {
         } else if (node instanceof Capture) {
             firstpos(((Capture) node).getChild(), set);
         } else if (node instanceof Group) {
-            return firstpos(parser.getTable().get(((lexer.Group)node.getOp()).getIndex()), set);
+            return firstpos(parser.getTable().get(((TokenGroup)node.getOp()).getIndex()), set);
         }
         return set;
     }
@@ -147,7 +148,7 @@ public class Automata {
         } else if (node instanceof Capture) {
             lastpos(((Capture) node).getChild(), set);
         } else if (node instanceof Group) {
-            return lastpos(parser.getTable().get(((lexer.Group)node.getOp()).getIndex()), set);
+            return lastpos(parser.getTable().get(((TokenGroup)node.getOp()).getIndex()), set);
         }
         return set;
     }
