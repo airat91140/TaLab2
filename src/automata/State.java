@@ -8,7 +8,7 @@ import java.util.*;
 public class State {
     private HashMap<Integer, State> transitions; // first is symbol, second is id
     int id;
-    private Set<Literal> internal;
+    Set<Literal> internal;
 
     public boolean isFinal() {
         return internal.stream().anyMatch(lit -> lit.getOp().getTag() == Tag.EOS);

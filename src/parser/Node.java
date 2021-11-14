@@ -2,7 +2,7 @@ package parser;
 
 import lexer.Token;
 
-public class Node {
+public abstract class Node {
     private final Token op;
     Node (Token t){
         op = t;
@@ -12,7 +12,7 @@ public class Node {
         return op;
     }
 
-    public Node clone() {
-        return new Node(op);
-    }
+    public abstract Node clone();
+
+    public abstract void inverse();
 }

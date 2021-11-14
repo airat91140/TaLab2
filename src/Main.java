@@ -1,13 +1,12 @@
-import automata.Automata;
-import lexer.Lexer;
-import parser.Node;
-import parser.Parser;
+import regex.Regex;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
-        String str = "ab+(a|ba)bba";
-        Automata a = new Automata(str);
-        a.minimize();
-        System.out.println(a);
+    public static void main(String[] args) {
+        String str = "a(a|b)";
+        Regex rx = new Regex(str), rr;
+        rx.compile();
+        System.out.println(rx.match("a"));
+        System.out.println(rx.restore());
+
     }
 }

@@ -1,10 +1,6 @@
 package automata;
 
-import lexer.TokenEscape;
-import lexer.Lexer;
-import lexer.Tag;
-import lexer.TokenGroup;
-import lexer.TokenRepeat;
+import lexer.*;
 import parser.*;
 
 import java.util.*;
@@ -15,6 +11,20 @@ public class Automata {
     private IdentityHashMap<Literal, Set<Literal>> followPosTable;
     private Parser parser;
     private State start;
+    private State current;
+    private Node root;
+
+    public State getCurrent() {
+        return current;
+    }
+
+    public int getStatesSize() {
+        return states.size();
+    }
+
+    public List<State> getFinals() {
+        return states.stream().filter(State::isFinal).collect(Collectors.toList());
+    }
 
     public String toString() {
         StringBuilder builder = new StringBuilder("Start: ");
@@ -29,13 +39,27 @@ public class Automata {
         return builder.toString();
     }
 
-    public Automata(String regex) throws Exception {
+    public Automata(String regex) {
         states = new ArrayList<>(); // states posed by their id
         followPosTable = new IdentityHashMap<>();
         parser = new Parser(new Lexer(regex));
         parser.program();
-        followpos(parser.getRoot());
+        root = parser.getRoot();
+        followpos(root);
         build();
+    }
+
+    private Automata(Node node) {
+        states = new ArrayList<>(); // states posed by their id
+        followPosTable = new IdentityHashMap<>();
+        parser = null;
+        root = node;
+        followpos(node);
+        build();
+    }
+
+    public Automata getInverse() {
+        return new Automata(parser.inverse());
     }
 
     private Set<State> getGroupById(State st, ArrayList<Set<State>> split) {
@@ -55,7 +79,7 @@ public class Automata {
         for (Set<State> set : prevSplit) {
             for (State st : set) {
                 Set<State> tmp = set.stream().filter(another -> {
-                    for (char c = 'a'; c <= 'b'; ++c) {
+                    for (char c = ' '; c <= '~'; ++c) {
                         if (!isInOneGroup(st.nextState(c), another.nextState(c), prevSplit))
                             return false;
                     }
@@ -121,11 +145,11 @@ public class Automata {
         int lastId = 0;
         HashSet<Integer> unMarkedIds = new HashSet<>();
         unMarkedIds.add(lastId);
-        states.add(new State(lastId, firstpos(parser.getRoot(), null)));
+        states.add(new State(lastId, firstpos(root, null)));
         while (!unMarkedIds.isEmpty()) {
             int current = unMarkedIds.iterator().next();
             unMarkedIds.remove(current);
-            for (char c = 'a'; c <= 'b'; ++c) {
+            for (char c = ' '; c <= '~'; ++c) {
                 State u = new State(lastId + 1, getUnion(current, c));
                 if (!states.contains(u)) {
                     unMarkedIds.add(++lastId);
@@ -142,6 +166,12 @@ public class Automata {
         if (!followPosTable.containsKey(lit))
             followPosTable.put(lit, Collections.newSetFromMap(new IdentityHashMap<>()));
         followPosTable.get(lit).addAll(follow);
+    }
+
+    private String putBracketsIfNes(String expr) {
+        if (expr.contains("|"))
+            return "(" + expr + ")";
+        return expr;
     }
 
     private boolean nullable(Node node) {
@@ -251,5 +281,85 @@ public class Automata {
 
     private Set<Literal> followpos(Literal literal) {
         return followPosTable.get(literal);
+    }
+
+    public void iterate() {
+        current = start;
+    }
+
+    public State next(char c) {
+        current = current.nextState(c);
+        return current;
+    }
+
+    public String k_path(int i, int j, int k) {
+        if (k == -1) {
+            if (i == j)
+                return "^";
+            StringJoiner transChars = new StringJoiner("|", "(", ")");
+            for (char c = ' '; c <= '~'; ++c)
+                if (states.get(i).nextState(c) == states.get(j))
+                    transChars.add(Character.toString(c));
+            if (transChars.length() == 2)
+                return null;
+            return transChars.toString();
+        }
+        else {
+            String first = k_path(i, j, k - 1);
+            String second = k_path(i, k, k - 1);
+            String third = k_path(k, k, k - 1);
+            String fourth = k_path(k, j, k - 1);
+            String res = (first == null ? "" : putBracketsIfNes(first)) +
+                    (second == null || third == null || fourth == null ? "" :
+                    (first == null ? "" : '|') + putBracketsIfNes(second) +
+                    (third.equals("^") ? "^" : "(" + third + "|^)+") +
+                    putBracketsIfNes(fourth));
+            return res.equals("") ? null : res;
+        }
+    }
+
+    public Automata and(Automata other) {
+        Automata result = new Automata("^");
+        result.states.clear();
+        for (int i = 0; i < this.states.size() * other.states.size(); ++i)
+            result.states.add(new State(i, null));
+        result.start = result.states.get(this.start.id * other.getStatesSize() + other.start.id);
+        for (State st1 : this.states) {
+            for (State st2 : other.states) {
+                for (char c = ' '; c <= '~'; ++c) {
+                    result.states.get(st1.id * other.getStatesSize() + st2.id).internal = new HashSet<>();
+                    if (st1.isFinal() && st2.isFinal())
+                        result.states.get(st1.id * other.getStatesSize() + st2.id).internal.add(new Literal(new Token(Tag.EOS)));
+                    State first = st1.nextState(c);
+                    State second = st2.nextState(c);
+                    result.states.get(st1.id * other.states.size() + st2.id)
+                            .addTransition(c, result.states.get(first.id * other.states.size() + second.id));
+                }
+            }
+        }
+        return result;
+    }
+
+    public Automata and(String other) {
+        Automata another = new Automata(other);
+        return this.and(another);
+    }
+
+    public static Automata and(Automata a1, Automata a2) {
+        return a1.and(a2);
+    }
+
+    public static Automata and(String a1, Automata a2) {
+        Automata first = new Automata(a1);
+        return first.and(a2);
+    }
+
+    public static Automata and(Automata a1, String a2) {
+        return a1.and(a2);
+    }
+
+    public static Automata and(String a1, String a2) {
+        Automata first = new Automata(a1);
+        return first.and(a2);
     }
 }

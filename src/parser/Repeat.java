@@ -3,7 +3,7 @@ package parser;
 import lexer.Token;
 
 public class Repeat extends Node{
-    public final Node left;
+    public Node left;
     public Repeat(Token t, Node left) {
         super(t);
         this.left = left;
@@ -12,5 +12,10 @@ public class Repeat extends Node{
     @Override
     public Node clone() {
         return new Repeat(getOp(), left.clone());
+    }
+
+    @Override
+    public void inverse() {
+        left.inverse();
     }
 }

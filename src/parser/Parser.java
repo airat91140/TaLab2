@@ -23,6 +23,12 @@ public class Parser {
         return root;
     }
 
+    public Node inverse() {
+        Node result = root.clone();
+        result.inverse();
+        return result;
+    }
+
     public Parser(Lexer l) {
         lexer = l;
         move();
@@ -34,22 +40,22 @@ public class Parser {
         look = lexer.scan();
     }
 
-    void match(int t) throws Exception {
+    void match(int t) {
         if (look.getTag() == t)
             move();
         else
-            throw new Exception("Syntax Error");
+            throw new IllegalArgumentException("Syntax Error");
     }
 
-    public void program() throws Exception {
+    public void program() {
         root = new Concat(node(), new EOS());
     }
 
-    Node node() throws Exception {
+    Node node() {
         return or();
     }
 
-    Node or() throws Exception {
+    Node or() {
         Node x = concat();
         while (!lexer.isEOS && look.getTag() == '|' && look.getTag() != ')') {
             move();
@@ -58,7 +64,7 @@ public class Parser {
         return x;
     }
 
-    Node concat() throws Exception {
+    Node concat() {
         Node x = literal();
         while (!lexer.isEOS && (look.getTag() == Tag.CONCAT || look.getTag() != Tag.OR && look.getTag() != ')')) {
             if (look.getTag() == Tag.CONCAT)
@@ -68,7 +74,7 @@ public class Parser {
         return x;
     }
 
-    Node positive(Node x) throws Exception {
+    Node positive(Node x) {
         match('+');
         Node y = new Positive(x);
         if (lexer.isEOS)
@@ -82,7 +88,7 @@ public class Parser {
         return y;
     }
 
-    Node repeat(Node x) throws Exception {
+    Node repeat(Node x) {
         TokenRepeat tmp = (TokenRepeat) look;
         move();
         Node y = new Repeat(tmp, x);
@@ -97,7 +103,7 @@ public class Parser {
         return y;
     }
 
-    Node literal() throws Exception {
+    Node literal() {
         Node x = null;
         switch (look.getTag()) {
             case Tag.CAPTURE -> {

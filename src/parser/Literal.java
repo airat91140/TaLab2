@@ -11,4 +11,8 @@ public class Literal extends Node {
     public Node clone() {
         return new Literal(getOp());
     }
+
+    @Override
+    public void inverse() {
+    }
 }

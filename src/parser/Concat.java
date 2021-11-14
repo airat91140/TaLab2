@@ -12,4 +12,13 @@ public class Concat extends Binary {
     public Node clone() {
         return new Concat(left.clone(), right.clone());
     }
+
+    @Override
+    public void inverse() {
+        left.inverse();
+        right.inverse();
+        Node tmp = left;
+        left = right;
+        right = tmp;
+    }
 }
