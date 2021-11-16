@@ -13,6 +13,9 @@ public class Automata {
     private State start;
     private State current;
     private Node root;
+    private HashMap<Integer, String> matches;
+    private final static char alphStart = 'a';
+    private final static char alphEnd = 'b';
 
     public State getCurrent() {
         return current;
@@ -45,6 +48,7 @@ public class Automata {
         parser = new Parser(new Lexer(regex));
         parser.program();
         root = parser.getRoot();
+        matches = new HashMap<>();
         followpos(root);
         build();
     }
@@ -70,6 +74,10 @@ public class Automata {
         return null;
     }
 
+    public HashMap<Integer, String> getMatches() {
+        return matches;
+    }
+
     private boolean isInOneGroup(State first, State second, ArrayList<Set<State>> split) {
         return getGroupById(first, split) == getGroupById(second, split);
     }
@@ -79,7 +87,7 @@ public class Automata {
         for (Set<State> set : prevSplit) {
             for (State st : set) {
                 Set<State> tmp = set.stream().filter(another -> {
-                    for (char c = 'a'; c <= 'b'; ++c) {
+                    for (char c = alphStart; c <= alphEnd; ++c) {
                         if (!isInOneGroup(st.nextState(c), another.nextState(c), prevSplit))
                             return false;
                     }
@@ -131,11 +139,9 @@ public class Automata {
         Set<Literal> result = Collections.newSetFromMap(new IdentityHashMap<>());
         for (Literal lit : states.get(current).getInternal()) {
             if (lit.getOp().getTag() == c) {
-                try {
-                    result.addAll(followpos(lit));
-                }
-                catch (Exception ex) {ex.printStackTrace();}
-            } else if (lit.getOp() instanceof TokenEscape) {
+                result.addAll(followpos(lit));
+            }
+            else if (lit.getOp() instanceof TokenEscape) {
                 if (((TokenEscape) lit.getOp()).getVal() == c) {
                     result.addAll(followpos(lit));
                 }
@@ -152,7 +158,7 @@ public class Automata {
         while (!unMarkedIds.isEmpty()) {
             int current = unMarkedIds.iterator().next();
             unMarkedIds.remove(current);
-            for (char c = 'a'; c <= 'b'; ++c) {
+            for (char c = alphStart; c <= alphEnd; ++c) {
                 State u = new State(lastId + 1, getUnion(current, c));
                 if (!states.contains(u)) {
                     unMarkedIds.add(++lastId);
@@ -194,8 +200,6 @@ public class Automata {
             return nullable(((Positive) node).left);
         } else if (node instanceof Capture) {
             return nullable(((Capture) node).getChild());
-        } else if (node instanceof Group) {
-            return nullable(parser.getTable().get(((TokenGroup) node.getOp()).getIndex()));
         }
         return false;
     }
@@ -222,8 +226,6 @@ public class Automata {
             firstpos(((Positive) node).left, set);
         } else if (node instanceof Capture) {
             firstpos(((Capture) node).getChild(), set);
-        } else if (node instanceof Group) {
-            return firstpos(parser.getTable().get(((TokenGroup) node.getOp()).getIndex()), set);
         }
         return set;
     }
@@ -250,8 +252,6 @@ public class Automata {
             lastpos(((Positive) node).left, set);
         } else if (node instanceof Capture) {
             lastpos(((Capture) node).getChild(), set);
-        } else if (node instanceof Group) {
-            return lastpos(parser.getTable().get(((TokenGroup) node.getOp()).getIndex()), set);
         }
         return set;
     }
@@ -305,6 +305,8 @@ public class Automata {
         } else if (node instanceof Or) {
             followpos(((Or) node).left);
             followpos(((Or) node).right);
+        } else if (node instanceof Capture) {
+            followpos(((Capture) node).getChild());
         }
     }
 
@@ -317,6 +319,7 @@ public class Automata {
     }
 
     public State next(char c) {
+        current.appendToMap(c, matches);
         current = current.nextState(c);
         return current;
     }
@@ -326,7 +329,7 @@ public class Automata {
             if (i == j)
                 return "^";
             StringJoiner transChars = new StringJoiner("|", "(", ")");
-            for (char c = 'a'; c <= 'b'; ++c)
+            for (char c = alphStart; c <= alphEnd; ++c)
                 if (states.get(i).nextState(c) == states.get(j))
                     transChars.add(Character.toString(c));
             if (transChars.length() == 2)
@@ -355,7 +358,7 @@ public class Automata {
         result.start = result.states.get(this.start.id * other.getStatesSize() + other.start.id);
         for (State st1 : this.states) {
             for (State st2 : other.states) {
-                for (char c = 'a'; c <= 'b'; ++c) {
+                for (char c = alphStart; c <= alphEnd; ++c) {
                     result.states.get(st1.id * other.getStatesSize() + st2.id).internal = new HashSet<>();
                     if (st1.isFinal() && st2.isFinal())
                         result.states.get(st1.id * other.getStatesSize() + st2.id).internal.add(new Literal(new Token(Tag.EOS)));

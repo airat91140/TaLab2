@@ -54,6 +54,7 @@ public class Regex {
         tmpFSM.iterate();
         for (int i = 0; i < str.length(); ++i)
             tmpFSM.next(str.charAt(i));
+        tmpFSM.getMatches().keySet().forEach(i -> matched.addMatch(i, tmpFSM.getMatches().get(i)));
         return tmpFSM.getCurrent().isFinal();
     }
 

@@ -2,7 +2,11 @@ package parser;
 
 import lexer.*;
 
+import java.util.HashSet;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
+
 /*
 literal -> char || escape || ^ || (or) || \n || (n:or) || Literal{x,y} || Literal+
 concat -> concat . literal || literal
@@ -12,12 +16,8 @@ Node -> or
 public class Parser {
     private Lexer lexer;
     private Token look;
-    private TreeMap<Integer, Node> table;
     private Node root;
-
-    public TreeMap<Integer, Node> getTable() {
-        return table;
-    }
+    private HashSet<Integer> currentIndexes;
 
     public Node getRoot() {
         return root;
@@ -32,15 +32,15 @@ public class Parser {
     public Parser(Lexer l) {
         lexer = l;
         move();
-        table = new TreeMap<>();
+        currentIndexes = new HashSet<>();
         root = null;
     }
 
-    void move() {
+    private void move() {
         look = lexer.scan();
     }
 
-    void match(int t) {
+    private void match(int t) {
         if (look.getTag() == t)
             move();
         else
@@ -51,11 +51,11 @@ public class Parser {
         root = new Concat(node(), new EOS());
     }
 
-    Node node() {
+    private Node node() {
         return or();
     }
 
-    Node or() {
+    private Node or() {
         Node x = concat();
         while (!lexer.isEOS && look.getTag() == '|' && look.getTag() != ')') {
             move();
@@ -64,7 +64,7 @@ public class Parser {
         return x;
     }
 
-    Node concat() {
+    private Node concat() {
         Node x = literal();
         while (!lexer.isEOS && (look.getTag() == Tag.CONCAT || look.getTag() != Tag.OR && look.getTag() != ')')) {
             if (look.getTag() == Tag.CONCAT)
@@ -74,7 +74,7 @@ public class Parser {
         return x;
     }
 
-    Node positive(Node x) {
+    private Node positive(Node x) {
         match('+');
         Node y = new Positive(x);
         if (lexer.isEOS)
@@ -88,7 +88,7 @@ public class Parser {
         return y;
     }
 
-    Node repeat(Node x) {
+    private Node repeat(Node x) {
         TokenRepeat tmp = (TokenRepeat) look;
         move();
         Node y = new Repeat(tmp, x);
@@ -103,15 +103,16 @@ public class Parser {
         return y;
     }
 
-    Node literal() {
+    private Node literal() {
         Node x = null;
         switch (look.getTag()) {
             case Tag.CAPTURE -> {
                 int index = ((TokenCapture) look).getIndex();
                 move();
+                currentIndexes.add(index);
                 x = new Capture(or(), look);
                 match(')');
-                table.put(index, x);
+                currentIndexes.remove(index);
             }
             case '(' -> {
                 move();
@@ -124,6 +125,8 @@ public class Parser {
             }
             default -> {
                 x = new Literal(look);
+                for (Integer i : currentIndexes)
+                    ((Literal) x).AddMatch(i);
                 move();
             }
         }

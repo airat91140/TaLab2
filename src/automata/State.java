@@ -4,6 +4,7 @@ import lexer.Tag;
 import parser.Literal;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public class State {
     private HashMap<Integer, State> transitions; // first is symbol, second is id
@@ -21,7 +22,19 @@ public class State {
     public State(int id, Set <Literal> poses) {
         this.id = id;
         transitions = new HashMap<>();
-        internal =   new HashSet<>(poses);
+        internal = new HashSet<>(poses);
+    }
+
+    public void appendToMap(int c, HashMap<Integer, String> matches) {
+        internal.stream()
+                .flatMap(lit -> lit.getMatches().stream())
+                .distinct()
+                .forEach((i) -> {
+                    if (matches.containsKey(i))
+                        matches.put(i, matches.get(i) + Character.toString(c));
+                    else
+                        matches.put(i, Character.toString(c));
+                });
     }
 
     @Override
