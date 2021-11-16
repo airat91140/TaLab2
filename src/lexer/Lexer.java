@@ -47,6 +47,8 @@ public class Lexer {
                     end = Integer.parseInt(regex.substring(pos, tmp)); // pos point on first digit, tmp on the first non-digit
                     pos = tmp;
                 }
+                if (end <= start && end != -1)
+                    Error();
                 if (peek(pos++) != '}') // repeat tag must be closed by '}'
                     Error();
                 return new TokenRepeat(start, end);

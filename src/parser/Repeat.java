@@ -2,8 +2,11 @@ package parser;
 
 import lexer.Token;
 
+import java.util.Set;
+
 public class Repeat extends Node{
     public Node left;
+    public Set<Literal> lastpos;
     public Repeat(Token t, Node left) {
         super(t);
         this.left = left;
