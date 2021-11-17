@@ -1,9 +1,8 @@
 package regex;
 
 import java.util.HashMap;
-import java.util.Iterator;
 
-public class Match implements Iterator<String> {
+public class Match {
     private HashMap<Integer, String> matched;
 
     void addMatch(int k, String v) {
@@ -16,20 +15,5 @@ public class Match implements Iterator<String> {
 
     public Match() {
         matched = new HashMap<>();
-    }
-
-    @Override
-    public boolean hasNext() {
-        return false;
-    }
-
-    @Override
-    public String next() {
-        return null;
-    }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
     }
 }

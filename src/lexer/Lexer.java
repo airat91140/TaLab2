@@ -11,7 +11,7 @@ public class Lexer {
         isEOS = false;
     }
 
-    void Error() {
+    public void Error() {
         throw new IllegalArgumentException("Illegal char near " + pos);
     }
 

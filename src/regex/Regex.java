@@ -49,11 +49,11 @@ public class Regex {
         else {
             tmpFSM = new Automata(regexp);
             tmpFSM.minimize();
-            tmpFSM.iterate();
         }
         tmpFSM.iterate();
         for (int i = 0; i < str.length(); ++i)
             tmpFSM.next(str.charAt(i));
+        tmpFSM.getMatches().clear();
         tmpFSM.getMatches().keySet().forEach(i -> matched.addMatch(i, tmpFSM.getMatches().get(i)));
         return tmpFSM.getCurrent().isFinal();
     }
@@ -85,6 +85,7 @@ public class Regex {
         }
         Regex tmp = new Regex();
         tmp.fsm = result;
+        tmp.isCompiled = true;
         return new Regex(tmp.restore());
     }
 
@@ -92,10 +93,14 @@ public class Regex {
         Automata result;
         if (isCompiled)
             result = fsm.getInverse();
-        else
-            result = new Automata(regexp).getInverse();
+        else {
+            result = new Automata(regexp);
+            result.minimize();
+            result = result.getInverse();
+        }
         Regex tmp = new Regex();
         tmp.fsm = result;
+        tmp.isCompiled = true;
         return new Regex(tmp.restore());
     }
 

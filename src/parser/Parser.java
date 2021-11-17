@@ -3,9 +3,7 @@ package parser;
 import lexer.*;
 
 import java.util.HashSet;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.LinkedList;
 
 /*
 literal -> char || escape || ^ || (or) || \n || (n:or) || Literal{x,y} || Literal+
@@ -18,6 +16,7 @@ public class Parser {
     private Token look;
     private Node root;
     private HashSet<Integer> currentIndexes;
+    private LinkedList<Integer> allInddexes;
 
     public Node getRoot() {
         return root;
@@ -25,8 +24,12 @@ public class Parser {
 
     public Node inverse() {
         Node result = root.clone();
-        result.inverse();
+        ((Concat) result).left.inverse();
         return result;
+    }
+
+    public LinkedList<Integer> getAllInddexes() {
+        return allInddexes;
     }
 
     public Parser(Lexer l) {
@@ -34,6 +37,7 @@ public class Parser {
         move();
         currentIndexes = new HashSet<>();
         root = null;
+        allInddexes = new LinkedList<>();
     }
 
     private void move() {
@@ -41,6 +45,8 @@ public class Parser {
     }
 
     private void match(int t) {
+        if (look == null)
+            lexer.Error();
         if (look.getTag() == t)
             move();
         else
@@ -58,7 +64,7 @@ public class Parser {
     private Node or() {
         Node x = concat();
         while (!lexer.isEOS && look.getTag() == '|' && look.getTag() != ')') {
-            move();
+            match('|');
             x = new Or(x, concat());
         }
         return x;
@@ -105,11 +111,14 @@ public class Parser {
 
     private Node literal() {
         Node x = null;
+        if (look == null)
+            lexer.Error();
         switch (look.getTag()) {
             case Tag.CAPTURE -> {
                 int index = ((TokenCapture) look).getIndex();
                 move();
                 currentIndexes.add(index);
+                allInddexes.add(index);
                 x = new Capture(or(), look);
                 match(')');
                 currentIndexes.remove(index);

@@ -1,6 +1,7 @@
 package automata;
 
 import lexer.Tag;
+import lexer.TokenEscape;
 import parser.Literal;
 
 import java.util.*;
@@ -27,14 +28,10 @@ public class State {
 
     public void appendToMap(int c, HashMap<Integer, String> matches) {
         internal.stream()
+                .filter(lit -> lit.getOp().getTag() == c || lit.getOp().getTag() == '#' && ((TokenEscape) lit.getOp()).getVal() == c)
                 .flatMap(lit -> lit.getMatches().stream())
                 .distinct()
-                .forEach((i) -> {
-                    if (matches.containsKey(i))
-                        matches.put(i, matches.get(i) + Character.toString(c));
-                    else
-                        matches.put(i, Character.toString(c));
-                });
+                .forEach((i) -> matches.put(i, matches.get(i) + Character.toString(c)));
     }
 
     @Override
