@@ -44,8 +44,10 @@ public class Regex {
 
     public boolean match(String str) {
         Automata tmpFSM;
-        if (isCompiled)
+        if (isCompiled) {
             tmpFSM = fsm;
+            fsm.getMatches().keySet().forEach(i -> fsm.getMatches().put(i, ""));
+        }
         else {
             tmpFSM = new Automata(regexp);
             tmpFSM.minimize();
@@ -53,7 +55,6 @@ public class Regex {
         tmpFSM.iterate();
         for (int i = 0; i < str.length(); ++i)
             tmpFSM.next(str.charAt(i));
-        tmpFSM.getMatches().clear();
         tmpFSM.getMatches().keySet().forEach(i -> matched.addMatch(i, tmpFSM.getMatches().get(i)));
         return tmpFSM.getCurrent().isFinal();
     }

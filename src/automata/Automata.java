@@ -16,6 +16,37 @@ public class Automata {
     private State current;
     private Node root;
     private HashMap<Integer, String> matches;
+    private HashMap<Triple, String> cashedKPath;
+
+    private class Triple {
+        int i, j, k;
+        Triple(int i, int j, int k) {
+            this.i = i;
+            this.j = j;
+            this.k = k;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Triple)) return false;
+            Triple triple = (Triple) o;
+            return i == triple.i && j == triple.j && k == triple.k;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(i, j, k);
+        }
+    }
+
+    private boolean containsCash(int i, int j, int k) {
+        return cashedKPath.containsKey(new Triple(i, j, k));
+    }
+
+    private String getCash(int i, int j, int k) {
+        return cashedKPath.get(new Triple(i, j, k));
+    }
 
     public Automata(String regex) {
         states = new ArrayList<>(); // states posed by their id
@@ -24,6 +55,7 @@ public class Automata {
         parser.program();
         root = parser.getRoot();
         matches = new HashMap<>();
+        cashedKPath = new HashMap<>();
         for (Integer i : parser.getAllInddexes())
             matches.put(i, "");
         followpos(root);
@@ -34,6 +66,7 @@ public class Automata {
     private Automata(Node node) {
         states = new ArrayList<>(); // states posed by their id
         followPosTable = new IdentityHashMap<>();
+        cashedKPath = new HashMap<>();
         parser = null;
         root = node;
         followpos(node);
@@ -350,6 +383,10 @@ public class Automata {
         return current;
     }
 
+    private String getPath(int i, int j, int k) {
+        return containsCash(i, j, k) ? getCash(i, j, k) : k_path(i, j, k);
+    }
+
     public String k_path(int i, int j, int k) {
         if (k == -1) {
             StringJoiner transChars = new StringJoiner("|", "(", ")");
@@ -363,15 +400,16 @@ public class Automata {
             }
             return transChars.toString();
         } else {
-            String first = k_path(i, j, k - 1);
-            String second = k_path(i, k, k - 1);
-            String third = k_path(k, k, k - 1);
-            String fourth = k_path(k, j, k - 1);
+            String first = getPath(i, j, k - 1);
+            String second = getPath(i, k, k - 1);
+            String third = getPath(k, k, k - 1);
+            String fourth = getPath(k, j, k - 1);
             String res = (first == null ? "" : putBracketsIfNes(first)) +
                     (second == null || third == null || fourth == null ? "" :
                             (first == null ? "" : '|') + putBracketsIfNes(second) +
                                     (third.equals("^") ? "^" : "(" + third + "|^)+") +
                                     putBracketsIfNes(fourth));
+            cashedKPath.put(new Triple(i, j, k), res.equals("") ? null : res);
             return res.equals("") ? null : res;
         }
     }
@@ -385,7 +423,6 @@ public class Automata {
         for (State st1 : this.states) {
             for (State st2 : other.states) {
                 for (char c = alphStart; c <= alphEnd; ++c) {
-                    //result.states.get(st1.id * other.getStatesSize() + st2.id).internal = new HashSet<>();
                     if (st1.isFinal() && st2.isFinal())
                         result.states.get(st1.id * other.getStatesSize() + st2.id).internal.add(new EOS());
                     State first = st1.nextState(c);
